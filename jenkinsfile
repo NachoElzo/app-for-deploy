@@ -2,47 +2,53 @@ pipeline {
     agent any
 
     stages {
-        stage('Test') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
+        stage('Tests') {
+            parallel {
+                stage('Unit-test') {
+                    agent {
+                    //Reuse node allows you to use node as dependency in another step
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                    /*
+                    Validates node installation and uses npm ci to improve dependencies in a pipeline
+                    Builds the web page app, creating index.html
+                    with # + command will not be executed --> #test -f build/index.html
+                    */
+                        sh '''
+                            #echo 'avoid this command'
+                            test -f build/index.html
+                            npm test
+                        '''
+                    }
                 }
-            }
-            steps {
-                /*
-                Validates node installation and uses npm ci to improve dependencies in a pipeline
-                Builds the web page app, creating index.html
-                The before command will not be executed  ---> #ls -la
-                */
-                sh '''
-                    #test -f build/index.html
-                    npm test
-                '''
-            }
-        }
-        
-        stage('E2E') {
-            // Install a Playwright image to run the tests
-            // https://playwright.dev/docs/docker
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
-                    reuseNode true
+
+                stage('E2E') {
+                    // Install a Playwright image to run the tests
+                    // https://playwright.dev/docs/docker
+                    agent {
+                        docker {
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        /*
+                        Installs a server to run the web app
+                        Serves the web app
+                        Runs Playwright tests
+                        */
+                        sh '''
+                            npm install serve
+                            node_modules/.bin/serve -s build &
+                            sleep 10
+                            npx playwright test
+                        '''
+                    }
                 }
-            }
-            steps {
-                /*
-                Installs a server to run the web app
-                Serves the web app
-                Runs Playwright tests
-                */
-                sh '''
-                    npm install serve
-                    node_modules/.bin/serve -s build &
-                    sleep 10
-                    npx playwright test
-                '''
             }
         }
     }
