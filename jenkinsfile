@@ -3,6 +3,8 @@ pipeline {
 
     stages {
         stage('Build') {
+            //creates node image
+            //reuse node to be used in another steps
             agent {
                 docker {
                     image 'node:18-alpine'
@@ -10,6 +12,7 @@ pipeline {
                 }
             }
             steps {
+            //validates node version and builds the app
                 sh '''
                     ls -la
                     node --version
@@ -20,7 +23,8 @@ pipeline {
                 '''
             }
         }
-        stage('Tests') {
+        stage('Unit && e2e tests') {
+            //with parallel we execute multiples steps in parallel
             parallel {
                 stage('Unit tests') {
                     agent {
@@ -29,13 +33,17 @@ pipeline {
                             reuseNode true
                         }
                     }
-
+            //with # we avoid run the test or comment the command
+            //step that run test npm test (added in package.json -scrips)
                     steps {
                         sh '''
                             #test -f build/index.html
                             npm test
                         '''
                     }
+            // run unitest junit test as post 
+            // if we use 2 test FW with same report folder path change in one of them the report path folder
+            // in the junit case change it in  package.json file
                     post {
                         always {
                             junit 'jest-results/junit.xml'
@@ -50,7 +58,9 @@ pipeline {
                             reuseNode true
                         }
                     }
-
+                    //npm install serve install server to run the web app
+                    //to avoid issues, run serve in node modules as locally 
+                    // & allows you to run at same time another command, that why we use sleep to stop building proces and the run test
                     steps {
                         sh '''
                             npm install serve
@@ -59,7 +69,8 @@ pipeline {
                             npx playwright test  --reporter=html
                         '''
                     }
-
+                    //script generated in pipleine syntx section to publish playwright report
+                    //remember to unlock jenkins privacy policy to open external files in jenkins options - scrip console
                     post {
                         always {
                             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright HTML Report', reportTitles: '', useWrapperFileDirectly: true])
