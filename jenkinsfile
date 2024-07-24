@@ -1,16 +1,15 @@
 pipeline {
     agent any
-    // creates an image with node 21
     stages {
+        /*
+
         stage('Build') {
             agent {
                 docker {
-                    image 'node:21-alpine'
+                    image 'node:18-alpine'
                     reuseNode true
                 }
             }
-            //validates node installation and use npc ci to improve dependencies in a pipeline
-            //builds the web page app, creating index.html
             steps {
                 sh '''
                     ls -la
@@ -22,7 +21,8 @@ pipeline {
                 '''
             }
         }
-        //install a node image to run the test
+        */
+
         stage('Test') {
             agent {
                 docker {
@@ -30,20 +30,48 @@ pipeline {
                     reuseNode true
                 }
             }
-            //validatest that index.html was created and run the test
+        /*
+        validates node installation and uses npm ci to improve dependencies in a pipeline
+        builds the web page app, creating index.html
+        before command will not be executed  ---> #ls -la
+        */
             steps {
                 sh '''
-                    test -f build/index.html
+                    #test -f build/index.html
                     npm test
                 '''
             }
         }
-    }
-    // post action that always will create a junit report that can be reviewed in jenkins
-        post {
-            always{
-                junit 'test-results/junit.xml'
+
+        stage('E2E') {
+            // install a Playwright image to run the test
+            // https://playwright.dev/docs/docker
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                    reuseNode true
+                }
+            }
+
+            steps {
+                   /*
+                install a server to run the web app
+                serves the web app
+                runs Playwright tests
+                */
+                sh '''
+                    npm install serve
+                    node_modules/.bin/serve -s build &
+                    sleep 10
+                    npx playwright test
+                '''
             }
         }
     }
-
+       // post action that always creates a JUnit report that can be reviewed in Jenkins
+    post {
+        always {
+            junit 'jest-results/junit.xml'
+        }
+    }
+}
