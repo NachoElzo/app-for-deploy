@@ -34,7 +34,9 @@ pipeline {
         validates node installation and uses npm ci to improve dependencies in a pipeline
         builds the web page app, creating index.html
         before command will not be executed  ---> #ls -la
-        */
+       
+
+
             steps {
                 sh '''
                     #test -f build/index.html
@@ -42,6 +44,7 @@ pipeline {
                 '''
             }
         }
+         */
 
         stage('E2E') {
             // install a Playwright image to run the test
