@@ -2,67 +2,55 @@ pipeline {
     agent any
 
     stages {
-        stage('Unit test') {
-        //with parallet you can add multiple stages to be runned in parallel
-            parallel {
-
-                 agent {
+        stage('Test') {
+            agent {
                 docker {
                     image 'node:18-alpine'
                     reuseNode true
                 }
             }
-
             steps {
+                /*
+                Validates node installation and uses npm ci to improve dependencies in a pipeline
+                Builds the web page app, creating index.html
+                The before command will not be executed  ---> #ls -la
+                */
                 sh '''
                     #test -f build/index.html
                     npm test
                 '''
             }
         }
-
+        
         stage('E2E') {
-        // install a Playwright image to run the test
-        // https://playwright.dev/docs/docker
+            // Install a Playwright image to run the tests
+            // https://playwright.dev/docs/docker
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     reuseNode true
                 }
             }
-        /*
-        install a server to run the web app
-        serves the web app
-        runs Playwright tests
-        */
-
-        //node_modules/.bin/serve -s build & sleep 10 -->> will build your application locally and sleep 10 ms
-        // & means that both commands will be executed at same time that's why we wait until next command
             steps {
+                /*
+                Installs a server to run the web app
+                Serves the web app
+                Runs Playwright tests
+                */
                 sh '''
                     npm install serve
-                    node_modules/.bin/serve -s build &  
+                    node_modules/.bin/serve -s build &
                     sleep 10
-                    npx playwright test --reporter=html
+                    npx playwright test
                 '''
             }
         }
-        
     }
-
-            }
-    //as we have 2 apps that use test-results (pw and jest) change the outputDirectory of jest tests in package.json file
-    // script copied from html report plugin and generated in the pipeline syntax
+    
+    // Post action that always creates a JUnit report that can be reviewed in Jenkins
     post {
         always {
             junit 'jest-results/junit.xml'
-            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright-report', reportTitles: '', useWrapperFileDirectly: true])
         }
     }
 }
-
-
-
-
-
-
