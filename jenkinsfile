@@ -46,7 +46,7 @@ pipeline {
             }
         }
     }
-
+    //make sure that the path of jest result is the same than the package json file
     post {
         always {
             junit 'test-results/junit.xml'
