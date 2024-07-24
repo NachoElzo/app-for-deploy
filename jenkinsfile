@@ -1,8 +1,8 @@
 pipeline {
     agent any
+
     stages {
         /*
-
         stage('Build') {
             agent {
                 docker {
@@ -30,22 +30,19 @@ pipeline {
                     reuseNode true
                 }
             }
-        /*
-        validates node installation and uses npm ci to improve dependencies in a pipeline
-        builds the web page app, creating index.html
-        before command will not be executed  ---> #ls -la
-       
-
-
             steps {
+                /*
+                validates node installation and uses npm ci to improve dependencies in a pipeline
+                builds the web page app, creating index.html
+                before command will not be executed  ---> #ls -la
+                */
                 sh '''
                     #test -f build/index.html
                     npm test
                 '''
             }
         }
-         */
-
+        
         stage('E2E') {
             // install a Playwright image to run the test
             // https://playwright.dev/docs/docker
@@ -55,9 +52,8 @@ pipeline {
                     reuseNode true
                 }
             }
-
             steps {
-                   /*
+                /*
                 install a server to run the web app
                 serves the web app
                 runs Playwright tests
@@ -71,7 +67,8 @@ pipeline {
             }
         }
     }
-       // post action that always creates a JUnit report that can be reviewed in Jenkins
+    
+    // post action that always creates a JUnit report that can be reviewed in Jenkins
     post {
         always {
             junit 'jest-results/junit.xml'
