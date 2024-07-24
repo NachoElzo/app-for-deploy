@@ -2,9 +2,11 @@ pipeline {
     agent any
 
     stages {
-     
-        stage('Test') {
-            agent {
+        stage('Unit test') {
+        //with parallet you can add multiple stages to be runned in parallel
+            parallel {
+
+                 agent {
                 docker {
                     image 'node:18-alpine'
                     reuseNode true
@@ -45,7 +47,10 @@ pipeline {
                 '''
             }
         }
+        
     }
+
+            }
     //as we have 2 apps that use test-results (pw and jest) change the outputDirectory of jest tests in package.json file
     // script copied from html report plugin and generated in the pipeline syntax
     post {
@@ -55,3 +60,9 @@ pipeline {
         }
     }
 }
+
+
+
+
+
+
