@@ -2,27 +2,7 @@ pipeline {
     agent any
 
     stages {
-        /*
-        stage('Build') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                sh '''
-                    ls -la
-                    node --version
-                    npm --version
-                    npm ci
-                    npm run build
-                    ls -la
-                '''
-            }
-        }
-        */
-
+     
         stage('Test') {
             agent {
                 docker {
@@ -30,34 +10,30 @@ pipeline {
                     reuseNode true
                 }
             }
+
             steps {
-                /*
-                validates node installation and uses npm ci to improve dependencies in a pipeline
-                builds the web page app, creating index.html
-                before command will not be executed  ---> #ls -la
-                */
                 sh '''
                     #test -f build/index.html
                     npm test
                 '''
             }
         }
-        
+
         stage('E2E') {
-            // install a Playwright image to run the test
-            // https://playwright.dev/docs/docker
+        // install a Playwright image to run the test
+        // https://playwright.dev/docs/docker
             agent {
                 docker {
                     image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                     reuseNode true
                 }
             }
+        /*
+        install a server to run the web app
+        serves the web app
+        runs Playwright tests
+        */
             steps {
-                /*
-                install a server to run the web app
-                serves the web app
-                runs Playwright tests
-                */
                 sh '''
                     npm install serve
                     node_modules/.bin/serve -s build &
@@ -67,8 +43,7 @@ pipeline {
             }
         }
     }
-    
-    // post action that always creates a JUnit report that can be reviewed in Jenkins
+
     post {
         always {
             junit 'jest-results/junit.xml'
