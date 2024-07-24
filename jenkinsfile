@@ -33,14 +33,23 @@ pipeline {
         serves the web app
         runs Playwright tests
         */
+
+        //node_modules/.bin/serve -s build & sleep 10 -->> will build your application locally and sleep 10 ms
+        // & means that both commands will be executed at same time that's why we wait until next command
             steps {
                 sh '''
                     npm install serve
-                    node_modules/.bin/serve -s build &
+                    node_modules/.bin/serve -s build &  
                     sleep 10
                     npx playwright test
                 '''
             }
+        }
+    }
+
+    post {
+        always {
+            junit 'test-results/junit.xml'
         }
     }
 }
