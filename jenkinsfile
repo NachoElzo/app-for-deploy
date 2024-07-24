@@ -46,7 +46,7 @@ pipeline {
             }
         }
     }
-    //make sure that the path of jest result is the same than the package json file
+    //as we have 2 apps that use test-results (pw and jest) change the outputDirectory of jest tests in package.json file
     post {
         always {
             junit 'jest-results/junit.xml'
